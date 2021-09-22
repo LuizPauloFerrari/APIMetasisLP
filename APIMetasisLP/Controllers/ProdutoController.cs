@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using APIMetasisLP.Data;
 using APIMetasisLP.Entities;
+using APIMetasisLP.DTO;
+using System.Net.Http;
+using System.Net;
 
 namespace APIMetasisLP.Controllers
 {
@@ -27,11 +30,41 @@ namespace APIMetasisLP.Controllers
         {
             return await _context.Produto.ToListAsync();
         }
+        
+        [HttpGet("Filter")]
+        public async Task<ActionResult<IEnumerable<Produto>>> GetProdutoFilter([FromQuery] ProdutoDTO produto)
+        {
+            return await _context.Produto
+             .Where(a => a.Descricao.Contains(produto.Descricao) || String.IsNullOrEmpty(produto.Descricao) )
+             .Where(a => a.ProdutoId == produto.ProdutoId || produto.ProdutoId == 0)
+             .Where(a => a.Preco >= produto.PrecoIni || produto.PrecoIni == 0)
+             .Where(a => a.Preco <= produto.PrecoFim || produto.PrecoFim == 0)
+             .OrderBy(a => a.ProdutoId)
+             //.Select(a => ProdutoToDTO(a))
+             .ToListAsync();
+        }
+        
+        // POST: api/Produto
+        [HttpPost("Filter")]
+        public async Task<ActionResult<IEnumerable<Produto>>> PostProdutoFilter(ProdutoDTO produto)
+        {
+            //return await _context.Produto.ToListAsync();
+            return await _context.Produto
+              .Where(a => a.Descricao.Contains(produto.Descricao) || String.IsNullOrEmpty(produto.Descricao))
+              .Where(a => a.ProdutoId == produto.ProdutoId || produto.ProdutoId == 0)
+              .Where(a => a.Preco >= produto.PrecoIni || produto.PrecoIni == 0)
+              .Where(a => a.Preco <= produto.PrecoFim || produto.PrecoFim == 0)
+              .OrderBy(a => a.ProdutoId)
+              //.Select(a => ProdutoToDTO(a))
+              .ToListAsync();
+        }
 
         // GET: api/Produto/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Produto>> GetProduto(int id)
         {
+            //await Task.Delay(5000);
+
             var produto = await _context.Produto.FindAsync(id);
 
             if (produto == null)
@@ -50,6 +83,15 @@ namespace APIMetasisLP.Controllers
             if (id != produto.ProdutoId)
             {
                 return BadRequest();
+            }
+
+            if (String.IsNullOrEmpty(produto.Descricao))
+            {
+                throw new ArgumentException("Descrição não informada.");
+            }
+            if (produto.Preco <= 0)
+            {
+                throw new ArgumentException("Preço não informado.");
             }
 
             _context.Entry(produto).State = EntityState.Modified;
@@ -78,6 +120,16 @@ namespace APIMetasisLP.Controllers
         [HttpPost]
         public async Task<ActionResult<Produto>> PostProduto(Produto produto)
         {
+            produto.ProdutoId = 0;
+            if (String.IsNullOrEmpty(produto.Descricao))
+            {
+                throw new ArgumentException("Descrição não informada.");
+            }
+            if (produto.Preco <= 0)
+            {
+                throw new ArgumentException("Preço não informado.");
+            }
+            
             _context.Produto.Add(produto);
             await _context.SaveChangesAsync();
 
@@ -104,5 +156,13 @@ namespace APIMetasisLP.Controllers
         {
             return _context.Produto.Any(e => e.ProdutoId == id);
         }
+
+        private static ProdutoDTO ProdutoToDTO(Produto produto) => new ProdutoDTO
+        {
+            ProdutoId = produto.ProdutoId,
+            Descricao = produto.Descricao,
+            PrecoIni = produto.Preco,
+            PrecoFim = produto.Preco
+        };
     }
 }
