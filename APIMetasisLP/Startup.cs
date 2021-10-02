@@ -42,15 +42,13 @@ namespace APIMetasisLP
               //      options.UseSqlServer(Configuration.GetConnectionString("APIMetasisLPContext")));
         }
 
-        private void UpgradeDatabase(IApplicationBuilder app)
+        private static void UpgradeDatabase(IApplicationBuilder app)
         {
-            using (var serviceScope = app.ApplicationServices.CreateScope())
+            using var serviceScope = app.ApplicationServices.CreateScope();
+            var context = serviceScope.ServiceProvider.GetService<APIMetasisLPContext>();
+            if (context != null && context.Database != null)
             {
-                var context = serviceScope.ServiceProvider.GetService<APIMetasisLPContext>();
-                if (context != null && context.Database != null)
-                {
-                    context.Database.Migrate();
-                }
+                context.Database.Migrate();
             }
         }
 

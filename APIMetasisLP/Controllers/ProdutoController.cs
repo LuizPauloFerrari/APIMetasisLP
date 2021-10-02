@@ -211,12 +211,12 @@ namespace APIMetasisLP.Controllers
             return _context.Produto.Any(e => e.ProdutoId == id);
         }
 
-        private static ProdutoDTO ProdutoToDTO(Produto produto) => new ProdutoDTO
-        {
-            ProdutoId = produto.ProdutoId,
-            Descricao = produto.Descricao,
-            PrecoIni = produto.Preco,
-            PrecoFim = produto.Preco
-        };
+        //private static ProdutoDTO ProdutoToDTO(Produto produto) => new ProdutoDTO
+        //{
+        //    ProdutoId = produto.ProdutoId,
+        //    Descricao = produto.Descricao,
+        //    PrecoIni = produto.Preco,
+        //    PrecoFim = produto.Preco
+        //};
     }
 }
