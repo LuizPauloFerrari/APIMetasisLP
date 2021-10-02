@@ -10,6 +10,8 @@ using APIMetasisLP.Entities;
 using APIMetasisLP.DTO;
 using System.Net.Http;
 using System.Net;
+using Canducci.Pagination;
+using Canducci.Pagination.Bases;
 
 namespace APIMetasisLP.Controllers
 {
@@ -29,6 +31,38 @@ namespace APIMetasisLP.Controllers
         public async Task<ActionResult<IEnumerable<Produto>>> GetProduto()
         {
             return await _context.Produto.ToListAsync();
+        }
+        
+        // GET: api/Produto
+        [HttpGet("page/{page?}")]
+        //public async Task<ActionResult> GetProdutoPaginated(int? page)
+        public async Task<ActionResult> GetProdutoPaginated(int? page)
+        {
+            page ??= 1;
+            if (page <= 0) page = 1;
+
+            var result = await _context
+               .Produto
+               .AsNoTracking()
+               .OrderBy(c => c.ProdutoId)
+               .ToPaginatedRestAsync(page.Value, 2);
+            return Ok(result);
+
+            //return await _context.Produto.ToListAsync();
+        }
+        
+        [HttpGet("page2/{page?}")]
+        public async Task<ActionResult<IEnumerable<Produto>>> GetProdutoPaginated2(int? page)
+        {
+            page ??= 1;
+            if (page <= 0) page = 1;
+
+            var result = await _context
+               .Produto
+               .AsNoTracking()
+               .OrderBy(c => c.ProdutoId)
+               .ToPaginatedRestAsync(page.Value, 2);
+            return Ok(result);
         }
         
         [HttpGet("Filter")]
@@ -57,6 +91,26 @@ namespace APIMetasisLP.Controllers
               .OrderBy(a => a.ProdutoId)
               //.Select(a => ProdutoToDTO(a))
               .ToListAsync();
+        }
+
+        // POST: api/Produto/FilterPage/{page}
+        [HttpPost("FilterPage")]
+        public async Task<ActionResult> PostProdutoFilterPage(int? size, int? page, ProdutoDTO produto)
+        {
+            page ??= 1;
+            size ??= 2;
+            if (page <= 0) page = 1;
+            if (size <= 0) size = 2;
+
+            var result = await _context.Produto
+              .Where(a => a.Descricao.Contains(produto.Descricao) || String.IsNullOrEmpty(produto.Descricao))
+              .Where(a => a.ProdutoId == produto.ProdutoId || produto.ProdutoId == 0)
+              .Where(a => a.Preco >= produto.PrecoIni || produto.PrecoIni == 0)
+              .Where(a => a.Preco <= produto.PrecoFim || produto.PrecoFim == 0)
+              .AsNoTracking()
+              .OrderBy(a => a.ProdutoId)
+              .ToPaginatedRestAsync(page.Value, size.Value);
+            return Ok(result);
         }
 
         // GET: api/Produto/5
