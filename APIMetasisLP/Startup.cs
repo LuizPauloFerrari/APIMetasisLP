@@ -16,6 +16,11 @@ using APIMetasisLP.Data;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using APIMetasisLP.Swagger;
 
 namespace APIMetasisLP
 {
@@ -53,10 +58,31 @@ namespace APIMetasisLP
                 };
             });
 
-            services.AddSwaggerGen(c =>
+            services.AddApiVersioning(x =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "APIMetasisLP", Version = "v1" });
+                x.UseApiBehavior = false;
+                // Especifica a versão padrão da API
+                x.DefaultApiVersion = new ApiVersion(2, 0);
+                // Assume que DefaultApiVersion será a padrão se o cliente não especificar nenhuma
+                x.AssumeDefaultVersionWhenUnspecified = true;
+                // Exibe no header a versão da API
+                x.ReportApiVersions = true;
+                // Especifica que a versão será utilizada no header
+                //x.ApiVersionReader = new HeaderApiVersionReader("x-api-version");
             });
+
+            services.AddVersionedApiExplorer(p =>
+            {
+                p.GroupNameFormat = "'v'VVV";
+                p.SubstituteApiVersionInUrl = true;
+            });
+
+            //services.AddSwaggerGen(c =>
+            //{
+            //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "APIMetasisLP", Version = "v2" });
+            //});
+            services.AddSwaggerGen();
+            services.ConfigureOptions<ConfigureSwaggerOptions>();
 
             services.AddDbContext<APIMetasisLPContext>(options =>
                     options.UseNpgsql(Configuration.GetConnectionString("postgre")));
@@ -76,13 +102,31 @@ namespace APIMetasisLP
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, 
+            IWebHostEnvironment env, 
+            IApiVersionDescriptionProvider apiVersionDescriptionProvider)
         {
+            
             if (env.IsDevelopment())
             {
+                
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "APIMetasisLP v1"));
+                //app.UseSwagger();
+                //app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "APIMetasisLP v1"));
+
+                app.UseSwagger(c =>
+                {
+                    c.SerializeAsV2 = true;
+                });
+
+                app.UseSwaggerUI(options =>
+                {
+                    foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions.Reverse() )
+                    {
+                        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", 
+                            description.GroupName.ToUpperInvariant());
+                    }
+                });
             }
 
             app.UseHttpsRedirection();

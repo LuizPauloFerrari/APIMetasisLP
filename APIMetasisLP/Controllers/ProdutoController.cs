@@ -65,7 +65,7 @@ namespace APIMetasisLP.Controllers
             return Ok(result);
         }
         
-        [HttpGet("Filter")]
+        [HttpGet("Filter", Name = nameof(GetProdutoFilter))]
         public async Task<ActionResult<IEnumerable<Produto>>> GetProdutoFilter([FromQuery] ProdutoDTO produto)
         {
             return await _context.Produto
@@ -171,7 +171,9 @@ namespace APIMetasisLP.Controllers
 
         // POST: api/Produto
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
+        //[HttpPost]
+        [HttpPost(Name = nameof(PostProduto))]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         public async Task<ActionResult<Produto>> PostProduto(Produto produto)
         {
             produto.ProdutoId = 0;

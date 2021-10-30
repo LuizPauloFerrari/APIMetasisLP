@@ -13,7 +13,10 @@ using System.Net.Http;
 
 namespace APIMetasisLP.Controllers
 {
-    [Route("v1/account")]
+    [ApiController]
+    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
+    [Route("v{version:apiVersion}/account")]
     public class HomeController : Controller
     {
         [HttpPost]
@@ -45,6 +48,7 @@ namespace APIMetasisLP.Controllers
         [HttpGet]
         [Route("anonymous")]
         [AllowAnonymous]
+        [MapToApiVersion("1.0")]
         public string Anonymous() => "Anônimo";
 
         [HttpGet]
@@ -59,6 +63,7 @@ namespace APIMetasisLP.Controllers
 
         [HttpGet]
         [Route("manager")]
+        [MapToApiVersion("2.0")]
         [Authorize(Roles = "manager")]
         public string Manager() => "Gerente";
 
